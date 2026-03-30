@@ -15,5 +15,10 @@ Ce projet inclut déjà un workflow GitHub Actions (`.github/workflows/pages.yml
 
 ## Note (formulaire de contact)
 
-Le template utilise `forms/contact.php`, mais GitHub Pages est **statique** (pas de PHP). Il faudra remplacer ça par un service type Formspree / Getform / Netlify Forms, ou retirer la section contact.
+Le template utilise `forms/contact.php`, mais GitHub Pages est **statique** (pas de PHP).
 
+Option simple (recommandée) : utiliser un service de formulaire (Formspree / Getform / Basin / etc.).
+
+- Crée un formulaire sur le service
+- Copie l’URL endpoint fournie (ex: `https://formspree.io/f/xxxxxx`)
+- Remplace l’attribut `action` dans `Style/index.html`

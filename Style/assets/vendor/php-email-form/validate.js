@@ -55,20 +55,42 @@
       body: formData,
       headers: {'X-Requested-With': 'XMLHttpRequest'}
     })
-    .then(response => {
-      if( response.ok ) {
-        return response.text();
-      } else {
-        throw new Error(`${response.status} ${response.statusText} ${response.url}`); 
+    .then(async response => {
+      if (!response.ok) {
+        throw new Error(`${response.status} ${response.statusText} ${response.url}`);
       }
+
+      let contentType = response.headers.get('content-type') || '';
+      let body = '';
+
+      // Some form providers return JSON; the original PHP script returns plain text ("OK").
+      if (contentType.includes('application/json')) {
+        try {
+          body = await response.json();
+        } catch (e) {
+          body = '';
+        }
+      } else {
+        body = await response.text();
+      }
+
+      return { body };
     })
-    .then(data => {
+    .then(({ body }) => {
       thisForm.querySelector('.loading').classList.remove('d-block');
-      if (data.trim() == 'OK') {
+
+      // For the original PHP handler, success is the literal text "OK".
+      // For static-host-friendly form providers (Formspree/Getform/etc.), any 2xx response is treated as success.
+      let isPhpHandler = /\.php(\?|$)/i.test(action);
+      let isOkText = (typeof body === 'string') && body.trim() === 'OK';
+
+      let success = isPhpHandler ? isOkText : true;
+
+      if (success) {
         thisForm.querySelector('.sent-message').classList.add('d-block');
         thisForm.reset(); 
       } else {
-        throw new Error(data ? data : 'Form submission failed and no error message returned from: ' + action); 
+        throw new Error(body ? body : 'Form submission failed and no error message returned from: ' + action); 
       }
     })
     .catch((error) => {
