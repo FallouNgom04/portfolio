@@ -50,38 +50,43 @@
   });
 
   function php_email_form_submit(thisForm, action, formData) {
+    let isPhpHandler = /\.php(\?|$)/i.test(action);
     fetch(action, {
       method: 'POST',
       body: formData,
-      headers: {'X-Requested-With': 'XMLHttpRequest'}
+      headers: isPhpHandler
+        ? {'X-Requested-With': 'XMLHttpRequest'}
+        : {'Accept': 'application/json'}
     })
     .then(async response => {
-      if (!response.ok) {
-        throw new Error(`${response.status} ${response.statusText} ${response.url}`);
-      }
-
       let contentType = response.headers.get('content-type') || '';
-      let body = '';
+
+      if (!response.ok) {
+        let errorBody = '';
+        try {
+          errorBody = await response.text();
+        } catch (e) {
+          errorBody = '';
+        }
+        throw new Error(errorBody || `${response.status} ${response.statusText} ${response.url}`);
+      }
 
       // Some form providers return JSON; the original PHP script returns plain text ("OK").
       if (contentType.includes('application/json')) {
         try {
-          body = await response.json();
+          return { body: await response.json() };
         } catch (e) {
-          body = '';
+          return { body: '' };
         }
-      } else {
-        body = await response.text();
       }
 
-      return { body };
+      return { body: await response.text() };
     })
     .then(({ body }) => {
       thisForm.querySelector('.loading').classList.remove('d-block');
 
       // For the original PHP handler, success is the literal text "OK".
       // For static-host-friendly form providers (Formspree/Getform/etc.), any 2xx response is treated as success.
-      let isPhpHandler = /\.php(\?|$)/i.test(action);
       let isOkText = (typeof body === 'string') && body.trim() === 'OK';
 
       let success = isPhpHandler ? isOkText : true;
@@ -101,6 +106,17 @@
   }
 
   function enhanceCommonErrors(message, action) {
+    if (String(action || '').includes('REPLACE_ME')) {
+      return [
+        'Form endpoint not configured.',
+        '',
+        'You are using a placeholder:',
+        'action="https://formspree.io/f/REPLACE_ME"',
+        '',
+        'Fix: replace REPLACE_ME with your real Formspree endpoint in Style/index.html.',
+      ].join('\n');
+    }
+
     // Live Server (VS Code) is a static server and returns 405 for POST requests.
     // Contact forms that post to .php require a PHP-capable server (Apache/Nginx/PHP built-in server).
     if ((/^\s*405\b/.test(message) || message.includes(' 405 ')) && /\.php(\?|$)/i.test(action)) {

@@ -22,3 +22,4 @@ Option simple (recommandée) : utiliser un service de formulaire (Formspree / Ge
 - Crée un formulaire sur le service
 - Copie l’URL endpoint fournie (ex: `https://formspree.io/f/xxxxxx`)
 - Remplace l’attribut `action` dans `Style/index.html`
+- Push sur GitHub, puis teste le formulaire sur l’URL GitHub Pages
