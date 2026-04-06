@@ -9,3 +9,10 @@ node_modules/
 # Template contact form submissions (generated)
 Style/forms/_submissions/
 
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+.env*
+!.env.example
